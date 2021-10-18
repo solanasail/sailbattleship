@@ -301,7 +301,6 @@ class DiscordBattleShip {
               
               if (shipToHit) {
                 shipToHit.hits++;
-                console.log(shipToHit);
 
                 await solanaConnect.transferSAIL(
                   await Wallet.getPrivateKey(players[opponentIndex].member.user.id), 
@@ -431,9 +430,11 @@ class DiscordBattleShip {
 	}
 
   checkBoatPos(board, boat, cords, direction, type) {
+    let isValid = false;
     for (let i = 0; i < board.length; i++) {
       let startCol = board[i].findIndex(elem => elem.cords.cord.toLowerCase() === cords.cord.toLowerCase());
       if (startCol != -1) {
+        isValid = true;
         let startRow = i;
         let count = 0;      
 
@@ -518,15 +519,21 @@ class DiscordBattleShip {
 				}
       }
     }
+    
+    if (!isValid) {
+      return;
+    }
 
     return { board, boat };
   }
 
   attack(enemyBoard, armyBoard, cords) {
 		let shipName = "";
+    let isValid = false;
 		for (let i = 0; i < armyBoard.length; i++) {
 			const col = armyBoard[i].findIndex(elem => elem.cords.cord.toLowerCase() === cords.cord.toLowerCase());
       if (col != -1) {
+        isValid = true;
 				if (armyBoard[i][col].data === "0") { // Missed attack
 					armyBoard[i][col].data = "3";
 					enemyBoard[i][col].data = "3";
@@ -539,6 +546,11 @@ class DiscordBattleShip {
         }
 			}
 		}
+
+    if (!isValid) {
+      return false;
+    }
+    
 		return { enemyBoard, armyBoard, shipName };
 	}
 
