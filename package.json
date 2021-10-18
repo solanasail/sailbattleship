@@ -11,7 +11,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord-battleship": "^1.0.1",
-    "discord.js": "^12.5.3"
+    "@solana/spl-token": "^0.1.8",
+    "@solana/web3.js": "^1.29.2",
+    "discord.js": "^13.2.0",
+    "keyv": "^4.0.3",
+    "mongoose": "^6.0.11"
   }
 }
