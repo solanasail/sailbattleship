@@ -173,6 +173,7 @@ client.on('messageCreate', async (message) => {
       });
     return;
   } else if (command == "test") {
+    console.log(await Room.getAll());
     return;
   }
 
@@ -508,6 +509,14 @@ client.on('messageCreate', async (message) => {
         .setDescription(`Please challenge someone other than yourself!`)]
       });
 		}
+    
+    if (await Room.getOpponent(challenger.id) && 
+      challenger.id == await Room.getOpponent(await Room.getOpponent(challenger.id))) {
+      return await message.channel.send({embeds: [new MessageEmbed()
+        .setColor(dangerColor)
+        .setDescription(`You are still playing the game`)]
+      });
+    }
 
     // set the room
     Room.setRoom(challenger.id, opponent.id);
@@ -555,6 +564,16 @@ client.on('messageCreate', async (message) => {
         .setDescription(`Please challenge someone other than yourself!`)]
       });
 		}
+
+    if (await Room.getOpponent(opponent.id) && 
+      opponent.id == await Room.getOpponent(await Room.getOpponent(opponent.id))) {
+      return await message.channel.send({embeds: [new MessageEmbed()
+        .setColor(dangerColor)
+        .setDescription(`You are still playing the game`)]
+      });
+    }
+
+    Room.setRoom(opponent.id, challenger.id);
 
     if (!await Room.getOpponent(challenger.id) || opponent.id != await Room.getOpponent(challenger.id)) {
       await message.channel.send({embeds: [new MessageEmbed()
