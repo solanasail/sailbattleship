@@ -62,10 +62,10 @@ class DiscordBattleShip {
     // define the valid boats type
     const boats = [
       { name: "carrier", length: 5, hits: 0, sunk: false }, 
-      // { name: "battleship", length: 4, hits: 0, sunk: false }, 
-      // { name: "destroyer", length: 3, hits: 0, sunk: false }, 
-      // { name: "submarine", length: 3, hits: 0, sunk: false }, 
-      // { name: "patrolboat", length: 2, hits: 0, sunk: false }
+      { name: "battleship", length: 4, hits: 0, sunk: false }, 
+      { name: "destroyer", length: 3, hits: 0, sunk: false }, 
+      { name: "submarine", length: 3, hits: 0, sunk: false }, 
+      { name: "patrolboat", length: 2, hits: 0, sunk: false }
     ];
 
     // define the valid directions

@@ -168,7 +168,7 @@ client.on('messageCreate', async (message) => {
       .setDescription(
         `${COMMAND_PREFIX}register-wallet\n` + 
         (await Utils.checkRoleInPublic(message) ? `${COMMAND_PREFIX}import-wallet <PK>\n` : ``)  +
-        `${COMMAND_PREFIX}balance\n${COMMAND_PREFIX}tipsol <user> <amount> -m <description>\n${COMMAND_PREFIX}tipsail <user> <amount> -m <description>\n${COMMAND_PREFIX}tipgsail <user> <amount> -m <description>`)] }).catch(error => {
+        `${COMMAND_PREFIX}balance\n${COMMAND_PREFIX}tipsol <user> <amount> -m <description>\n${COMMAND_PREFIX}tipsail <user> <amount> -m <description>\n${COMMAND_PREFIX}tipgsail <user> <amount> -m <description>\n\n?battleship <user>\n?accept <user>`)] }).catch(error => {
         console.log(`Cannot send messages to this user`);
       });
     return;
