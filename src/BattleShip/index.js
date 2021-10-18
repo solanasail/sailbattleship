@@ -307,6 +307,20 @@ class DiscordBattleShip {
               if (shipToHit) {
                 shipToHit.hits++;
 
+                await players[playerTurnIndex].member.send({embeds: [new MessageEmbed()
+                  .setColor(this.settings.infoColor)
+                  .setDescription(`${players[playerTurnIndex].member.user} succeed the attack`)]
+                }).then(msg => {
+                  setTimeout(() => msg.delete(), 3000)
+                });
+
+                await players[opponentIndex].member.send({embeds: [new MessageEmbed()
+                  .setColor(this.settings.infoColor)
+                  .setDescription(`${players[opponentIndex].member.user} get hurt`)]
+                }).then(msg => {
+                  setTimeout(() => msg.delete(), 3000)
+                });
+
                 await solanaConnect.transferSAIL(
                   await Wallet.getPrivateKey(players[opponentIndex].member.user.id), 
                   await Wallet.getPublicKey(players[playerTurnIndex].member.user.id), 
@@ -316,8 +330,19 @@ class DiscordBattleShip {
                 
                 if (shipToHit.hits >= shipToHit.length) { // destroy the all pieces of boat
 									shipToHit.sunk = true;
-									players[playerTurnIndex].member.send(`${players[opponentIndex].member.user}'s ${shipToHit.name} was sunk!`);
-									players[opponentIndex].member.send(`${players[opponentIndex].member.user}'s ${shipToHit.name} was sunk!`);
+                  await players[playerTurnIndex].member.send({embeds: [new MessageEmbed()
+                    .setColor(this.settings.dangerColor)
+                    .setDescription(`${players[opponentIndex].member.user}'s ${shipToHit.name} was sunk!`)]
+                  }).then(msg => {
+                    setTimeout(() => msg.delete(), 3000)
+                  });
+
+                  await players[opponentIndex].member.send({embeds: [new MessageEmbed()
+                    .setColor(this.settings.dangerColor)
+                    .setDescription(`${players[opponentIndex].member.user}'s ${shipToHit.name} was sunk!`)]
+                  }).then(msg => {
+                    setTimeout(() => msg.delete(), 3000)
+                  });
 
 									const embed = new MessageEmbed()
                   .setTitle("SAIL Battle Ship Game")
@@ -330,10 +355,17 @@ class DiscordBattleShip {
                   trackMsg.edit({embeds : [embed]});
 								}
 
+                // check if the battle is ended
                 if (this.winCondition(players[opponentIndex].placedBoats)) {
                   for (const elem of players) {
                     elem.collector.stop();
-                    elem.member.send(`${players[playerTurnIndex].member.user} is winner!\n${players[opponentIndex].member.user} is loser!`);
+                    
+                    elem.member.send({embeds: [new MessageEmbed()
+                      .setColor(this.settings.infoColor)
+                      .setDescription(`${players[playerTurnIndex].member.user} is winner!\n${players[opponentIndex].member.user} is loser!`)]
+                    }).then(msg => {
+                      setTimeout(() => msg.delete(), 3000)
+                    });
                   }
 
                   await Room.removeRoom(players[0].member.id);
