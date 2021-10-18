@@ -75,17 +75,12 @@ class DiscordBattleShip {
     let opponentIndex = (playerTurnIndex + 1) % players.length;
 
     for (const player of players) {
-      const helpMsg = await player.member.send({
-        embeds: [
-          new MessageEmbed()
-            .setTitle(`Board Help`)
-            .setColor(this.settings.infoColor)
-            .setDescription(`To add your boats to the board, please use the following command format.\n${this.settings.prefix}add <ship> <Board Cords> <direction>\nAn example: ${this.settings.prefix}add destroyer D5 down`)
-        ] 
+      const helpMsg = await player.member.send({embeds: [new MessageEmbed()
+        .setTitle(`Board Help`)
+        .setColor(this.settings.infoColor)
+        .setDescription(`To add your boats to the board, please use the following command format.\n${this.settings.prefix}add <ship> <Board Cords> <direction>\nAn example: ${this.settings.prefix}add destroyer D5 down`)] 
       });
-
       const statusMsg = await player.member.send(`Available Ships:\ncarrier (5)\nbattleship (4)\ndestroyer (3)\nsubmarine (3)\npatrolboat (2)`);
-      
       const enemyBoard = await player.member.send(`\nEnemy:\n${this.displayBoard(player.enemyBoard)}`);
       const armyBoard = await player.member.send(`\nArmy:\n${this.displayBoard(player.armyBoard)}`);
 
@@ -97,11 +92,10 @@ class DiscordBattleShip {
       const filter = (elem) => elem.author.id === player.member.id && 
         [`${this.settings.prefix}add`, `${this.settings.prefix}attack`].includes(elem.content.split(" ")[0]);
 
-      const collector = armyBoard.channel.createMessageCollector(filter);
-			player.collector = collector;
+			player.collector = armyBoard.channel.createMessageCollector(filter);
       player.gameChannel = armyBoard.channel.id;
 
-      collector.on("collect", async (msg) => {
+      player.collector.on("collect", async (msg) => {
         const argument = msg.content.slice(this.settings.prefix.length).trim().split(/ +/g);
 				const cmd = argument.shift();
 
@@ -237,10 +231,21 @@ class DiscordBattleShip {
 
                   await statusDoc.edit(`Enemy:\n🔲 = Empty Spot\n⚪ = Missed Attack\n🔴 = Hit Attack\n\nArmy:\n🔲 = Empty Spot\n⚪ = Missed Opponent Attack\n🔴 = Hit Ship\n🟩 = Unhit Ship\n\nIt is ${message.member.tag}'s turn to attack!`);
 								}
+
+                const embed = new MessageEmbed()
+                  .setTitle("SAIL Battle Ship Game")
+                  .setColor(this.settings.infoColor)
+                  .setDescription(`${challenger.user} vs ${opponent.user}`);
+                  
+                for (const elem of players) {
+                  embed.addField(`${elem.member.user.tag}`, `Has ${elem.placedBoats.filter(b => !b.sunk).length} ships left!\n\n${elem.placedBoats.map(b => b.sunk ? `❌ ${b.name}` : `✅ ${b.name}`).join("\n")}`);
+                }
+                trackMsg.edit({embeds : [embed]});
               } else {
                 return msg.channel.send({embeds: [new MessageEmbed()
                   .setColor(this.settings.infoColor)
-                  .setDescription(`It looks like your opponent hasn't placed all of their ships yet! Please wait for them to finish. Once they finish you will get a DM.`)]
+                  .setTitle(`Please Wait...`)
+                  .setDescription(`Opponent is placing the battle ships...`)]
                 }).then(msg => {
                   setTimeout(() => msg.delete(), 10000)
                 });
@@ -309,18 +314,20 @@ class DiscordBattleShip {
                   'Destroyed one piece of boat'
                 );
                 
-                if (shipToHit.hits === shipToHit.length) { // destroy the all pieces of boat
+                if (shipToHit.hits >= shipToHit.length) { // destroy the all pieces of boat
 									shipToHit.sunk = true;
 									players[playerTurnIndex].member.send(`${players[opponentIndex].member.user}'s ${shipToHit.name} was sunk!`);
 									players[opponentIndex].member.send(`${players[opponentIndex].member.user}'s ${shipToHit.name} was sunk!`);
-									// const embed = new discord_js_1.MessageEmbed()
-									// 	.setTitle("SAIL Battle Ship Game <:submarine:753289857907818561>")
-									// 	.setFooter(`${challenger.user.tag} vs ${opponent.user.tag}`)
-									// 	.setColor(this.settings.embedColor);
-									// for (const p of players) {
-									// 	embed.addField(p.member.user.tag, `Has ${p.placedBoats.filter(b => !b.sunk).length} ships left!\n\n${p.placedBoats.map(b => b.sunk ? `❌ ${b.name}` : `✅ ${b.name}`).join("\n")}`);
-									// }
-									// trackMsg.edit("", { embed });
+
+									const embed = new MessageEmbed()
+                  .setTitle("SAIL Battle Ship Game")
+                  .setColor(this.settings.infoColor)
+                  .setDescription(`${challenger.user} vs ${opponent.user}`);
+                  
+                  for (const elem of players) {
+                    embed.addField(`${elem.member.user.tag}`, `Has ${elem.placedBoats.filter(b => !b.sunk).length} ships left!\n\n${elem.placedBoats.map(b => b.sunk ? `❌ ${b.name}` : `✅ ${b.name}`).join("\n")}`);
+                  }
+                  trackMsg.edit({embeds : [embed]});
 								}
 
                 if (this.winCondition(players[opponentIndex].placedBoats)) {
@@ -331,16 +338,12 @@ class DiscordBattleShip {
 
                   await Room.removeRoom(players[0].member.id);
 
-                  // const embed = new discord_js_1.MessageEmbed()
-                  // 	.setTitle("SAIL Battle Ship Game <:submarine:753289857907818561>")
-                  // 	.setFooter(`${challenger.user.tag} vs ${opponent.user.tag}`)
-                  // 	.setColor(this.settings.embedColor)
-                  // 	.setDescription(`${players[player].member.user} has won the game!`);
-                  // trackMsg.edit(`${players[0].member}, ${players[1].member}`, { embed });
-                  // challenger.roles.remove("876068848456069150") 
-                  // opponent.roles.remove("876068848456069150")
-                  // message.channel.send(` ${players[player].member.user} HAS WON`)
-                  // message.channel.send(`/send ${players[player].member.user} 1`)
+                  const embed = new MessageEmbed()
+                  .setTitle("SAIL Battle Ship Game")
+                  .setColor(this.settings.infoColor)
+                  .setDescription(`${challenger.user} vs ${opponent.user}\n${players[playerTurnIndex].member.user} has won the game!`);
+                  
+                  trackMsg.edit({embeds : [embed]});
                 }
               } else {
                 opponentIndex = playerTurnIndex;
@@ -360,6 +363,7 @@ class DiscordBattleShip {
     }
   }
 
+  // generate board
   generateBoard = (rows, cols) => {
     const boardLetter = [
       { index: 0, letter: "A" }, 
@@ -397,6 +401,7 @@ class DiscordBattleShip {
     return doneData;
   }
 
+  // display the board
   displayBoard = (board) => {
 		let returnData = "";
 		returnData = returnData.concat("⬛1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣🔟\n");
@@ -429,6 +434,7 @@ class DiscordBattleShip {
 		return returnData;
 	}
 
+  // check the pos
   checkBoatPos(board, boat, cords, direction, type) {
     let isValid = false;
     for (let i = 0; i < board.length; i++) {
@@ -527,6 +533,7 @@ class DiscordBattleShip {
     return { board, boat };
   }
 
+  // attack the boat
   attack(enemyBoard, armyBoard, cords) {
 		let shipName = "";
     let isValid = false;
@@ -550,10 +557,11 @@ class DiscordBattleShip {
     if (!isValid) {
       return false;
     }
-    
+
 		return { enemyBoard, armyBoard, shipName };
 	}
 
+  // check the battle is ended
   winCondition(boats) {
 		for (const boat of boats) {
 			if (!boat.sunk)
