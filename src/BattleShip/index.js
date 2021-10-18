@@ -229,7 +229,7 @@ class DiscordBattleShip {
 
                   const statusDoc = message.client.channels.cache.get(elem.gameChannel).messages.cache.get(elem.gameMessages.status);
 
-                  await statusDoc.edit(`Enemy:\n🔲 = Empty Spot\n⚪ = Missed Attack\n🔴 = Hit Attack\n\nArmy:\n🔲 = Empty Spot\n⚪ = Missed Opponent Attack\n🔴 = Hit Ship\n🟩 = Unhit Ship\n\nIt is ${message.member.tag}'s turn to attack!`);
+                  await statusDoc.edit(`Enemy:\n🔲 = Empty Spot\n⚪ = Missed Attack\n🔴 = Hit Attack\n\nArmy:\n🔲 = Empty Spot\n⚪ = Missed Opponent Attack\n🔴 = Hit Ship\n🟩 = Unhit Ship`);
 								}
 
                 const embed = new MessageEmbed()
@@ -238,7 +238,7 @@ class DiscordBattleShip {
                   .setDescription(`${challenger.user} vs ${opponent.user}`);
                   
                 for (const elem of players) {
-                  embed.addField(`${elem.member.user.tag}`, `Has ${elem.placedBoats.filter(b => !b.sunk).length} ships left!\n\n${elem.placedBoats.map(b => b.sunk ? `❌ ${b.name}` : `✅ ${b.name}`).join("\n")}`);
+                  embed.addField(`${elem.member.user.tag}`, `Has ${elem.placedBoats.filter(b => !b.sunk).length} ships left!\n${elem.placedBoats.map(b => b.sunk ? `❌ ${b.name}` : `✅ ${b.name}`).join("\n")}\n`);
                 }
                 trackMsg.edit({embeds : [embed]});
               } else {
@@ -296,10 +296,10 @@ class DiscordBattleShip {
                 });
               }
 
-              message.client.channels.cache.get(players[playerTurnIndex].gameChannel).messages.cache.get(players[playerTurnIndex].gameMessages.enemy).edit(`Attack Board:\n${this.displayBoard(attackResult.enemyBoard)}`);
+              message.client.channels.cache.get(players[playerTurnIndex].gameChannel).messages.cache.get(players[playerTurnIndex].gameMessages.enemy).edit(`Enemy Board:\n${this.displayBoard(attackResult.enemyBoard)}`);
 							players[playerTurnIndex].enemyBoard = attackResult.enemyBoard;
 
-							message.client.channels.cache.get(players[opponentIndex].gameChannel).messages.cache.get(players[opponentIndex].gameMessages.army).edit(`Ship Board:\n${this.displayBoard(attackResult.armyBoard)}`);
+							message.client.channels.cache.get(players[opponentIndex].gameChannel).messages.cache.get(players[opponentIndex].gameMessages.army).edit(`Army Board:\n${this.displayBoard(attackResult.armyBoard)}`);
 							players[opponentIndex].armyBoard = attackResult.armyBoard;
 
               const shipToHit = players[opponentIndex].placedBoats.find(elem => elem.name.toLowerCase() === attackResult.shipName.toLowerCase());
@@ -337,47 +337,45 @@ class DiscordBattleShip {
                     setTimeout(() => msg.delete(), 3000)
                   });
 
-                  await players[opponentIndex].member.send({embeds: [new MessageEmbed()
-                    .setColor(this.settings.dangerColor)
-                    .setDescription(`${players[opponentIndex].member.user}'s ${shipToHit.name} was sunk!`)]
-                  }).then(msg => {
-                    setTimeout(() => msg.delete(), 3000)
-                  });
-
 									const embed = new MessageEmbed()
-                  .setTitle("SAIL Battle Ship Game")
-                  .setColor(this.settings.infoColor)
-                  .setDescription(`${challenger.user} vs ${opponent.user}`);
+                    .setTitle("SAIL Battle Ship Game")
+                    .setColor(this.settings.infoColor)
+                    .setDescription(`${challenger.user} vs ${opponent.user}`);
                   
                   for (const elem of players) {
-                    embed.addField(`${elem.member.user.tag}`, `Has ${elem.placedBoats.filter(b => !b.sunk).length} ships left!\n\n${elem.placedBoats.map(b => b.sunk ? `❌ ${b.name}` : `✅ ${b.name}`).join("\n")}`);
+                    embed.addField(`${elem.member.user.tag}`, `Has ${elem.placedBoats.filter(b => !b.sunk).length} ships left!\n${elem.placedBoats.map(b => b.sunk ? `❌ ${b.name}` : `✅ ${b.name}`).join("\n")}\n`);
                   }
                   trackMsg.edit({embeds : [embed]});
 								}
 
                 // check if the battle is ended
                 if (this.winCondition(players[opponentIndex].placedBoats)) {
+                  const embed = new MessageEmbed()
+                    .setTitle("SAIL Battle Ship Game")
+                    .setColor(this.settings.infoColor)
+                    .setDescription(`${challenger.user} vs ${opponent.user}\n\n${players[playerTurnIndex].member.user} is winner!`);
+                  
                   for (const elem of players) {
                     elem.collector.stop();
-                    
-                    elem.member.send({embeds: [new MessageEmbed()
+                    embed.addField(`${elem.member.user.tag}`, `Has ${elem.placedBoats.filter(b => !b.sunk).length} ships left!\n${elem.placedBoats.map(b => b.sunk ? `❌ ${b.name}` : `✅ ${b.name}`).join("\n")}\n`);
+
+                    await elem.member.send({embeds: [new MessageEmbed()
                       .setColor(this.settings.infoColor)
-                      .setDescription(`${players[playerTurnIndex].member.user} is winner!\n${players[opponentIndex].member.user} is loser!`)]
-                    }).then(msg => {
-                      setTimeout(() => msg.delete(), 3000)
+                      .setDescription(`Game Over`)]
                     });
                   }
+                  trackMsg.edit({embeds : [embed]});
 
                   await Room.removeRoom(players[0].member.id);
-
-                  const embed = new MessageEmbed()
-                  .setTitle("SAIL Battle Ship Game")
-                  .setColor(this.settings.infoColor)
-                  .setDescription(`${challenger.user} vs ${opponent.user}\n${players[playerTurnIndex].member.user} has won the game!`);
-                  
-                  trackMsg.edit({embeds : [embed]});
                 }
               } else {
+                await players[opponentIndex].member.send({embeds: [new MessageEmbed()
+                  .setColor(this.settings.infoColor)
+                  .setDescription(`Your turn!`)]
+                }).then(msg => {
+                  setTimeout(() => msg.delete(), 3000)
+                });
+
                 opponentIndex = playerTurnIndex;
                 playerTurnIndex = (playerTurnIndex + 1) % players.length;
               }
