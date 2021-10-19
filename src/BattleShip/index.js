@@ -366,6 +366,8 @@ class DiscordBattleShip {
 
                 // check if the battle is ended
                 if (this.winCondition(players[opponentIndex].placedBoats)) {
+                  clearInterval(autoTurnInterval);
+                  
                   const embed = new MessageEmbed()
                     .setTitle("SAIL Battle Ship Game")
                     .setColor(this.settings.infoColor)
