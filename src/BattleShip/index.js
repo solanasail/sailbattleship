@@ -60,6 +60,8 @@ class DiscordBattleShip {
         isTurn: false,
 			},
 		];
+
+    let autoTurnInterval;
     
     // define the valid boats type
     const boats = [
@@ -241,6 +243,11 @@ class DiscordBattleShip {
 
                 // assign the turn
                 players[0].isTurn = true;
+
+                // set auto turn interval
+                autoTurnInterval = setInterval(() => {
+                  this.autoTurn(players);
+                }, 30000);
                 return;
               } else {
                 return await msg.channel.send({embeds: [new MessageEmbed()
@@ -382,6 +389,12 @@ class DiscordBattleShip {
                 player.isTurn = false;
                 players[opponentIndex].isTurn = true;
 
+                clearInterval(autoTurnInterval);
+                // auto change the turn
+                autoTurnInterval = setInterval(() => {
+                  this.autoTurn(players);
+                }, 30000);
+
                 await players[opponentIndex].member.send({embeds: [new MessageEmbed()
                   .setColor(this.settings.infoColor)
                   .setDescription(`Your turn!`)]
@@ -476,7 +489,7 @@ class DiscordBattleShip {
 	}
 
   // check the pos
-  checkBoatPos(board, boat, cords, direction, type) {
+  checkBoatPos = (board, boat, cords, direction, type) => {
     let isValid = false;
     for (let i = 0; i < board.length; i++) {
       let startCol = board[i].findIndex(elem => elem.cords.cord.toLowerCase() === cords.cord.toLowerCase());
@@ -575,7 +588,7 @@ class DiscordBattleShip {
   }
 
   // attack the boat
-  attack(enemyBoard, armyBoard, cords) {
+  attack = (enemyBoard, armyBoard, cords) => {
 		let shipName = "";
     let isValid = false;
 		for (let i = 0; i < armyBoard.length; i++) {
@@ -603,13 +616,37 @@ class DiscordBattleShip {
 	}
 
   // check the battle is ended
-  winCondition(boats) {
+  winCondition = (boats) => {
 		for (const boat of boats) {
 			if (!boat.sunk)
 				return false;
 		}
 		return true;
 	}
+
+  // auto change the turn
+  autoTurn = (players) => {
+    players[0].isTurn = !players[0].isTurn;
+    players[1].isTurn = !players[1].isTurn;
+
+    if (players[0].isTurn) {
+      players[0].member.send({embeds: [new MessageEmbed()
+        .setColor(this.settings.infoColor)
+        .setDescription(`Your turn!`)]
+      }).then(msg => {
+        setTimeout(() => msg.delete(), 5000)
+      }).catch(error => { console.log(`Cannot send messages`) })
+    }
+
+    if (players[1].isTurn) {
+      players[1].member.send({embeds: [new MessageEmbed()
+        .setColor(this.settings.infoColor)
+        .setDescription(`Your turn!`)]
+      }).then(msg => {
+        setTimeout(() => msg.delete(), 5000)
+      }).catch(error => { console.log(`Cannot send messages`) })
+    }
+  }
 }
 
 export {
