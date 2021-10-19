@@ -45,6 +45,7 @@ class DiscordBattleShip {
 				placedBoats: [], 
 				gameMessages: { help: "", status: "", army: "", enemy: "" }, 
 				ready: false,
+        isTurn: false,
 			},
       // define the opponent
       { 
@@ -56,6 +57,7 @@ class DiscordBattleShip {
 				placedBoats: [], 
 				gameMessages: { help: "", status: "", army: "", enemy: "" }, 
 				ready: false,
+        isTurn: false,
 			},
 		];
     
@@ -71,10 +73,7 @@ class DiscordBattleShip {
     // define the valid directions
     const directions = ["up", "down", "left", "right"];
 
-    let playerTurnIndex = 0;
-    let opponentIndex = (playerTurnIndex + 1) % players.length;
-
-    for (const player of players) {
+    for (const [index, player] of players.entries()) {
       const helpMsg = await player.member.send({embeds: [new MessageEmbed()
         .setTitle(`Board Help`)
         .setColor(this.settings.infoColor)
@@ -97,16 +96,12 @@ class DiscordBattleShip {
       player.gameChannel = armyBoard.channel.id;
 
       player.collector.on("collect", async (msg) => {
+        if (msg.author.bot) return;
+
         const argument = msg.content.slice(this.settings.prefix.length).trim().split(/ +/g);
 				const cmd = argument.shift();
 
-        const curPlayer = players.find(elem => elem.member.id === msg.author.id);
-
-        if (!curPlayer) {
-          return;
-        }
-
-        if (!curPlayer.ready) {
+        if (!player.ready) { // not ready yet
           if (cmd == "add") {
             // assign the boat type
             const boatType = argument[0];
@@ -132,7 +127,7 @@ class DiscordBattleShip {
             }
 
             // check to avoid the duplication the boat
-            if (curPlayer.placedBoats.some(elem => elem.name === boatType.toLowerCase())) {
+            if (player.placedBoats.some(elem => elem.name === boatType.toLowerCase())) {
               return await msg.channel.send({embeds: [new MessageEmbed()
                 .setColor(this.settings.dangerColor)
                 .setDescription(`You already placed that boat. Please try a different one.`)]
@@ -198,7 +193,7 @@ class DiscordBattleShip {
               }).catch(error => { console.log(`Cannot send messages`) })
             }
             
-            curPlayer.placedBoats.push(Object.assign({}, boats.find(elem => elem.name === boatType.toLowerCase())));
+            player.placedBoats.push(Object.assign({}, boats.find(elem => elem.name === boatType.toLowerCase())));
 
             const reRender = this.checkBoatPos(
               player.armyBoard, 
@@ -208,15 +203,16 @@ class DiscordBattleShip {
               "render"
             );
 
-            curPlayer.armyBoard = reRender.board;
+            player.armyBoard = reRender.board;
 
-            message.client.channels.cache.get(curPlayer.gameChannel).messages.cache.get(curPlayer.gameMessages.army).edit(`Army:\n${this.displayBoard(reRender.board)}`);
+            message.client.channels.cache.get(player.gameChannel).messages.cache.get(player.gameMessages.army).edit(`Army:\n${this.displayBoard(reRender.board)}`);
 
-            const statusDoc = message.client.channels.cache.get(curPlayer.gameChannel).messages.cache.get(curPlayer.gameMessages.status); 
+            const statusDoc = message.client.channels.cache.get(player.gameChannel).messages.cache.get(player.gameMessages.status); 
 						statusDoc.edit(statusDoc.content.replace(new RegExp(boatType.toLowerCase(), "ig"), `~~${boatType.toLowerCase()}~~`));
 
-            if (curPlayer.placedBoats.length == boats.length) {
-							curPlayer.ready = true;
+            // if the user placed all ships
+            if (player.placedBoats.length == boats.length) {
+							player.ready = true; // ready
               if (players[0].ready && players[1].ready) { // both are ready
                 for (const elem of players) {
                   const helpEmbed = message.client.channels.cache.get(elem.gameChannel).messages.cache.get(elem.gameMessages.help);
@@ -236,12 +232,16 @@ class DiscordBattleShip {
                 const embed = new MessageEmbed()
                   .setTitle("SAIL Battle Ship Game")
                   .setColor(this.settings.infoColor)
-                  .setDescription(`${challenger.user} vs ${opponent.user}`);
+                  .setDescription(`${players[0].member.user} vs ${players[1].member.user}`);
                   
                 for (const elem of players) {
                   embed.addField(`${elem.member.user.tag}`, `Has ${elem.placedBoats.filter(b => !b.sunk).length} ships left!\n${elem.placedBoats.map(b => b.sunk ? `❌ ${b.name}` : `✅ ${b.name}`).join("\n")}\n`);
                 }
                 trackMsg.edit({embeds : [embed]});
+
+                // assign the turn
+                players[0].isTurn = true;
+                return;
               } else {
                 return await msg.channel.send({embeds: [new MessageEmbed()
                   .setColor(this.settings.infoColor)
@@ -254,9 +254,10 @@ class DiscordBattleShip {
 						}
           }
         } else if (players[0].ready && players[1].ready) { // both are ready
-          if (players[playerTurnIndex].member.id === msg.author.id) { // check the turn
+          if (player.isTurn) { // check the turn
             if (cmd == "attack") {
               const cords = argument[0];
+              let opponentIndex = (index + 1) % 2;
 
               // check the cords
               if (!cords) {
@@ -279,7 +280,7 @@ class DiscordBattleShip {
               }
 
               const attackResult = this.attack(
-                players[playerTurnIndex].enemyBoard, // challenger's enemy body
+                player.enemyBoard, // challenger's enemy body
                 players[opponentIndex].armyBoard,  // opponent's army board
                 { 
                   letter: cords[0], 
@@ -297,8 +298,8 @@ class DiscordBattleShip {
                 }).catch(error => { console.log(`Cannot send messages`) })
               }
 
-              message.client.channels.cache.get(players[playerTurnIndex].gameChannel).messages.cache.get(players[playerTurnIndex].gameMessages.enemy).edit(`Enemy Board:\n${this.displayBoard(attackResult.enemyBoard)}`);
-							players[playerTurnIndex].enemyBoard = attackResult.enemyBoard;
+              message.client.channels.cache.get(player.gameChannel).messages.cache.get(player.gameMessages.enemy).edit(`Enemy Board:\n${this.displayBoard(attackResult.enemyBoard)}`);
+							player.enemyBoard = attackResult.enemyBoard;
 
 							message.client.channels.cache.get(players[opponentIndex].gameChannel).messages.cache.get(players[opponentIndex].gameMessages.army).edit(`Army Board:\n${this.displayBoard(attackResult.armyBoard)}`);
 							players[opponentIndex].armyBoard = attackResult.armyBoard;
@@ -308,34 +309,41 @@ class DiscordBattleShip {
               if (shipToHit) {
                 shipToHit.hits++;
 
-                await players[playerTurnIndex].member.send({embeds: [new MessageEmbed()
-                  .setColor(this.settings.infoColor)
-                  .setDescription(`${players[playerTurnIndex].member.user} succeed the attack`)]
-                }).then(msg => {
-                  setTimeout(() => msg.delete(), 3000)
-                }).catch(error => { console.log(`Cannot send messages`) })
+                await msg.channel.send({embeds: [new MessageEmbed()
+                    .setColor(this.settings.infoColor)
+                    .setDescription(`${player.member.user} succeed the attack`)]
+                  }).then(msg => {
+                    setTimeout(() => msg.delete(), 5000)
+                  }).catch(error => { console.log(`Cannot send messages`) })
 
                 await players[opponentIndex].member.send({embeds: [new MessageEmbed()
-                  .setColor(this.settings.infoColor)
-                  .setDescription(`${players[opponentIndex].member.user} get hurt`)]
-                }).then(msg => {
-                  setTimeout(() => msg.delete(), 3000)
-                }).catch(error => { console.log(`Cannot send messages`) })
+                    .setColor(this.settings.infoColor)
+                    .setDescription(`${players[opponentIndex].member.user} get hurt`)]
+                  }).then(msg => {
+                    setTimeout(() => msg.delete(), 5000)
+                  }).catch(error => { console.log(`Cannot send messages`) })
 
                 await solanaConnect.transferSAIL(
                   await Wallet.getPrivateKey(players[opponentIndex].member.user.id), 
-                  await Wallet.getPublicKey(players[playerTurnIndex].member.user.id), 
+                  await Wallet.getPublicKey(player.member.user.id), 
                   1, 
                   'Destroyed one piece of boat'
                 );
                 
                 if (shipToHit.hits >= shipToHit.length) { // destroy the all pieces of boat
 									shipToHit.sunk = true;
-                  await players[playerTurnIndex].member.send({embeds: [new MessageEmbed()
+                  await msg.channel.send({embeds: [new MessageEmbed()
                     .setColor(this.settings.dangerColor)
                     .setDescription(`${players[opponentIndex].member.user}'s ${shipToHit.name} was sunk!`)]
                   }).then(msg => {
-                    setTimeout(() => msg.delete(), 3000)
+                    setTimeout(() => msg.delete(), 5000)
+                  }).catch(error => { console.log(`Cannot send messages`) })
+
+                  await players[opponentIndex].member.send({embeds: [new MessageEmbed()
+                    .setColor(this.settings.dangerColor)
+                    .setDescription(`${players[opponentIndex].member.user}'s ${shipToHit.name} was sunk!`)]
+                  }).then(msg => {
+                    setTimeout(() => msg.delete(), 5000)
                   }).catch(error => { console.log(`Cannot send messages`) })
 
 									const embed = new MessageEmbed()
@@ -354,7 +362,7 @@ class DiscordBattleShip {
                   const embed = new MessageEmbed()
                     .setTitle("SAIL Battle Ship Game")
                     .setColor(this.settings.infoColor)
-                    .setDescription(`${challenger.user} vs ${opponent.user}\n\n${players[playerTurnIndex].member.user} is winner!`);
+                    .setDescription(`${challenger.user} vs ${opponent.user}\n\n${player.member.user} is winner!`);
                   
                   for (const elem of players) {
                     elem.collector.stop();
@@ -370,23 +378,25 @@ class DiscordBattleShip {
                   await Room.removeRoom(players[0].member.id);
                 }
               } else {
+                // change turn
+                player.isTurn = false;
+                players[opponentIndex].isTurn = true;
+
                 await players[opponentIndex].member.send({embeds: [new MessageEmbed()
                   .setColor(this.settings.infoColor)
                   .setDescription(`Your turn!`)]
                 }).then(msg => {
                   setTimeout(() => msg.delete(), 5000)
                 }).catch(error => { console.log(`Cannot send messages`) })
-
-                opponentIndex = playerTurnIndex;
-                playerTurnIndex = (playerTurnIndex + 1) % players.length;
               }
             }
           } else {
             return await msg.channel.send({embeds: [new MessageEmbed()
+              .setTitle(`It isn't your turn`)
               .setColor(this.settings.dangerColor)
-              .setDescription(`It isn't your turn yet. Please wait for the opponent to attack.`)]
+              .setDescription(`Please wait for the opponent to attack`)]
             }).then(msg => {
-              setTimeout(() => msg.delete(), 3000)
+              setTimeout(() => msg.delete(), 5000)
             }).catch(error => { console.log(`Cannot send messages`) });
           }
         }
