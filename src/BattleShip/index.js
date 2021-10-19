@@ -373,7 +373,7 @@ class DiscordBattleShip {
                   .setColor(this.settings.infoColor)
                   .setDescription(`Your turn!`)]
                 }).then(msg => {
-                  setTimeout(() => msg.delete(), 3000)
+                  setTimeout(() => msg.delete(), 5000)
                 });
 
                 opponentIndex = playerTurnIndex;
