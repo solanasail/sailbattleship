@@ -229,7 +229,7 @@ class DiscordBattleShip {
 
                   const statusDoc = message.client.channels.cache.get(elem.gameChannel).messages.cache.get(elem.gameMessages.status);
 
-                  await statusDoc.edit(`Enemy:\n🔲 = Empty Spot\n⚪ = Missed Attack\n🔴 = Hit Attack\n\nArmy:\n🔲 = Empty Spot\n⚪ = Missed Opponent Attack\n🔴 = Hit Ship\n🟩 = Unhit Ship`);
+                  await statusDoc.edit(`Enemy:\n:blue_square: = Empty Spot\n:yellow_circle: = Missed Attack\n🔴 = Hit Attack\n\nArmy:\n:blue_square: = Empty Spot\n:yellow_circle: = Missed Opponent Attack\n🔴 = Hit Ship\n🟩 = Unhit Ship`);
 								}
 
                 const embed = new MessageEmbed()
@@ -456,7 +456,7 @@ class DiscordBattleShip {
         // "2" is a hit ship piece, 
         // "3" is a missed shot from opponent
         
-        temp += `${board[i][j].data === "0" ? "◻️" : board[i][j].data === "1" ? "🟩" : board[i][j].data === "2" ? "🟥" : "⚪"}`;
+        temp += `${board[i][j].data === "0" ? ":blue_square:" : board[i][j].data === "1" ? "🟩" : board[i][j].data === "2" ? "🟥" : ":yellow_circle:"}`;
       }
 
 			returnData += leftEmoji.find(elem => elem.i === i).emoji + temp + "\n";
