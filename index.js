@@ -74,7 +74,9 @@ client.on('messageCreate', async (message) => {
     if (message.channel.type != "DM") {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(`This must be done in a private DM channel`)]});
+        .setDescription(`This must be done in a private DM channel`)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
@@ -93,7 +95,7 @@ client.on('messageCreate', async (message) => {
     // convert the balance to dolar
     const dollarValue = await PriceService.getDollarValueForSol(sol.amount);
 
-    message.author.send({embeds: [new MessageEmbed()
+    await message.author.send({embeds: [new MessageEmbed()
       .setTitle(`${CLUSTERS.DEVNET}`)
       .setColor(infoColor)
       .setDescription(`Address: ${account.publicKey}\n\nPrivate Key:\n${await Utils.Uint8Array2String(account.privateKey)}\n\n[${account.privateKey}]\n\nSOL: ${sol.amount}\ngSAIL: ${gSAIL.amount}\nSAIL: ${SAIL.amount}\n\nTotal: ${dollarValue}$`)]}).catch(error => {
@@ -104,13 +106,15 @@ client.on('messageCreate', async (message) => {
     if (message.channel.type != "DM") {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(`This must be done in a private DM channel`)]});
+        .setDescription(`This must be done in a private DM channel`)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
     // check the role in private channel
     if (!await Utils.checkRoleInPrivate(guild, message)) {
-      message.author.send({embeds: [new MessageEmbed()
+      await message.author.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`You don't have any permission`)]}).catch(error => {
           console.log(`Cannot send messages to this user`);
@@ -119,7 +123,7 @@ client.on('messageCreate', async (message) => {
     }
 
     if (!args[0]) {
-      message.author.send({embeds: [new MessageEmbed()
+      await message.author.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`Please input the private key`)]}).catch(error => {
           console.log(`Cannot send messages to this user`);
@@ -130,7 +134,7 @@ client.on('messageCreate', async (message) => {
     // create new keypair.
     let account = await solanaConnect.importWallet(message.author.id, await Utils.string2Uint8Array(args[0]));
     if (!account.status) {
-      message.author.send({embeds: [new MessageEmbed()
+      await message.author.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`Invalid private key`)]}).catch(error => {
           console.log(`Cannot send messages to this user`);
@@ -150,7 +154,7 @@ client.on('messageCreate', async (message) => {
     // convert the balance to dolar
     const dollarValue = await PriceService.getDollarValueForSol(sol.amount);
 
-    message.author.send({embeds: [new MessageEmbed()
+    await message.author.send({embeds: [new MessageEmbed()
       .setTitle(`${CLUSTERS.DEVNET}`)
       .setColor(infoColor)
       .setDescription(`Address: ${account.publicKey}\n\nPrivate Key:\n${await Utils.Uint8Array2String(account.privateKey)}\n\n[${account.privateKey}]\n\nSOL: ${sol.amount}\ngSAIL: ${gSAIL.amount}\nSAIL: ${SAIL.amount}\n\nTotal: ${dollarValue}$`)]} ).catch(error => {
@@ -173,7 +177,7 @@ client.on('messageCreate', async (message) => {
       });
     return;
   } else if (command == "test") {
-    console.log(await Room.getAll());
+    // console.log(await Room.getAll());
     return;
   }
 
@@ -182,7 +186,9 @@ client.on('messageCreate', async (message) => {
       await message.channel.send({embeds: [new MessageEmbed()
         .setTitle(`${message.author.tag}`)
         .setColor(dangerColor)
-        .setDescription(`You must register or import your wallet before making transfers\nThis must be done in a private DM channel`)]});
+        .setDescription(`You must register or import your wallet before making transfers\nThis must be done in a private DM channel`)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
     } catch (error) {
       console.log(`${message.author.username}'s behavior was detected.`);
     }
@@ -204,7 +210,7 @@ client.on('messageCreate', async (message) => {
     // convert the balance to dolar
     const dollarValue = await PriceService.getDollarValueForSol(sol.amount);
     
-    message.author.send({embeds: [new MessageEmbed()
+    await message.author.send({embeds: [new MessageEmbed()
       .setAuthor(message.author.tag)
       .setColor(infoColor)
       .setDescription(`Address: ${publicKey}\n\nSOL: ${sol.amount}\ngSAIL: ${gSAIL.amount}\nSAIL: ${SAIL.amount}\n\nTotal: ${dollarValue}$`)]}).catch(error => {
@@ -216,7 +222,9 @@ client.on('messageCreate', async (message) => {
     if (!validation.status) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(validation.msg)]});
+        .setDescription(validation.msg)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
@@ -228,14 +236,18 @@ client.on('messageCreate', async (message) => {
     if (sol.amount - amount * recipientIds.length < SOL_FEE_LIMIT * recipientIds.length) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription('Not enough SOL')]});
+        .setDescription('Not enough SOL')]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
     if (amount < 0.000001 || 5 < amount) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription('MIN: 0.000001\nMAX: 5')]});
+        .setDescription('MIN: 0.000001\nMAX: 5')]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
@@ -246,7 +258,9 @@ client.on('messageCreate', async (message) => {
       if (!await Wallet.getPublicKey(elem)) {
         await message.channel.send({embeds: [new MessageEmbed()
           .setColor(dangerColor)
-          .setDescription(`<@!${elem}> dosn't have the wallet`)]});
+          .setDescription(`<@!${elem}> dosn't have the wallet`)]}).catch(error => {
+            console.log(`Cannot send messages`);
+          });
         continue;
       }
 
@@ -258,14 +272,16 @@ client.on('messageCreate', async (message) => {
       if (gSAIL.amount < 1 || SAIL.amount < 1) {
         await message.channel.send({embeds: [new MessageEmbed()
           .setColor(dangerColor)
-          .setDescription(`You should have at least 1 gSAIL and 1 SAIL`)]});
+          .setDescription(`You should have at least 1 gSAIL and 1 SAIL`)]}).catch(error => {
+            console.log(`Cannot send messages`);
+          });
           return;
       }
 
       await solanaConnect.transferSOL(await Wallet.getPrivateKey(message.author.id), await Wallet.getPublicKey(elem), amount, desc);
 
       // DM to sender
-      message.author.send({embeds: [new MessageEmbed()
+      await message.author.send({embeds: [new MessageEmbed()
         .setColor(infoColor)
         .setTitle('Tip SOL')
         .setDescription(`You sent ${amount} SOL to <@!${elem}>\n\nDescription:\n${desc}`)]}).catch(error => {
@@ -297,7 +313,9 @@ client.on('messageCreate', async (message) => {
     if (!validation.status) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(validation.msg)]});
+        .setDescription(validation.msg)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
@@ -309,7 +327,9 @@ client.on('messageCreate', async (message) => {
     if (sol.amount < SOL_FEE_LIMIT) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(`Not enough SOL fee to tip the SAIL`)]});
+        .setDescription(`Not enough SOL fee to tip the SAIL`)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
@@ -317,14 +337,18 @@ client.on('messageCreate', async (message) => {
     if (amount * recipientIds.length > SAIL.amount) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(`Not enough SAIL`)]});
+        .setDescription(`Not enough SAIL`)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
     if (amount < 0.000001 || 1000 < amount) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription('MIN: 0.000001\nMAX: 1000')]});
+        .setDescription('MIN: 0.000001\nMAX: 1000')]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
@@ -335,7 +359,9 @@ client.on('messageCreate', async (message) => {
       if (!await Wallet.getPublicKey(elem)) {
         await message.channel.send({embeds: [new MessageEmbed()
           .setColor(dangerColor)
-          .setDescription(`<@!${elem}> dosn't have the wallet`)]});
+          .setDescription(`<@!${elem}> dosn't have the wallet`)]}).catch(error => {
+            console.log(`Cannot send messages`);
+          });
         continue;
       }
 
@@ -347,14 +373,16 @@ client.on('messageCreate', async (message) => {
       if (gSAIL.amount < 1 || SAIL.amount < 1) {
         await message.channel.send({embeds: [new MessageEmbed()
           .setColor(dangerColor)
-          .setDescription(`You should have at least 1 gSAIL and 1 SAIL`)]});
+          .setDescription(`You should have at least 1 gSAIL and 1 SAIL`)]}).catch(error => {
+            console.log(`Cannot send messages`);
+          });
           return;
       }
 
       await solanaConnect.transferSAIL(await Wallet.getPrivateKey(message.author.id), await Wallet.getPublicKey(elem), amount, desc);
 
       // DM to sender
-      message.author.send({embeds: [new MessageEmbed()
+      await message.author.send({embeds: [new MessageEmbed()
         .setColor(infoColor)
         .setTitle('Tip SAIL')
         .setDescription(`You sent ${amount} SAIL to <@!${elem}>\n\nDescription:\n${desc}`)]}).catch(error => {
@@ -386,7 +414,9 @@ client.on('messageCreate', async (message) => {
     if (!validation.status) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(validation.msg)]});
+        .setDescription(validation.msg)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
@@ -398,7 +428,9 @@ client.on('messageCreate', async (message) => {
     if (sol.amount < SOL_FEE_LIMIT) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(`Not enough SOL fee to tip the GSAIL`)]});
+        .setDescription(`Not enough SOL fee to tip the GSAIL`)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
@@ -407,14 +439,18 @@ client.on('messageCreate', async (message) => {
     if (amount * recipientIds.length > gSAIL.amount) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(`Not enough GSAIL`)]});
+        .setDescription(`Not enough GSAIL`)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
     if (amount < 0.000000001 || 100 < amount) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription('MIN: 0.000000001\nMAX: 100')]});
+        .setDescription('MIN: 0.000000001\nMAX: 100')]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
       return;
     }
 
@@ -425,7 +461,9 @@ client.on('messageCreate', async (message) => {
       if (!await Wallet.getPublicKey(elem)) {
         await message.channel.send({embeds: [new MessageEmbed()
           .setColor(dangerColor)
-          .setDescription(`<@!${elem}> dosn't have the wallet`)]});
+          .setDescription(`<@!${elem}> dosn't have the wallet`)]}).catch(error => {
+            console.log(`Cannot send messages`);
+          });
         continue;
       }
       
@@ -437,14 +475,16 @@ client.on('messageCreate', async (message) => {
       if (gSAIL.amount < 1 || SAIL.amount < 1) {
         await message.channel.send({embeds: [new MessageEmbed()
           .setColor(dangerColor)
-          .setDescription(`You should have at least 1 gSAIL and 1 SAIL`)]});
+          .setDescription(`You should have at least 1 gSAIL and 1 SAIL`)]}).catch(error => {
+            console.log(`Cannot send messages`);
+          });
           return;
       }
       
       await solanaConnect.transferGSAIL(await Wallet.getPrivateKey(message.author.id), await Wallet.getPublicKey(elem), amount, desc);
 
       // DM to sender
-      message.author.send({embeds: [new MessageEmbed()
+      await message.author.send({embeds: [new MessageEmbed()
         .setColor(infoColor)
         .setTitle('Tip gSAIL')
         .setDescription(`You sent ${amount} gSAIL to <@!${elem}>\n\nDescription:\n${desc}`)]}).catch(error => {
@@ -487,7 +527,9 @@ client.on('messageCreate', async (message) => {
     if (sol.amount < 0.1 || gSAIL.amount < 1 || SAIL.amount < 1) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(`You should have at least 0.1 sol, 1 gSAIL and 1 SAIL`)]});
+        .setDescription(`You should have at least 0.1 sol, 1 gSAIL and 1 SAIL`)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
         return;
     }
 
@@ -499,6 +541,8 @@ client.on('messageCreate', async (message) => {
       return await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`Please mention another SAILOR to battle!`)]
+      }).catch(error => {
+        console.log(`Cannot send messages`);
       });
 		}
 
@@ -507,6 +551,8 @@ client.on('messageCreate', async (message) => {
       return await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`Please challenge someone other than yourself!`)]
+      }).catch(error => {
+        console.log(`Cannot send messages`);
       });
 		}
     
@@ -515,6 +561,8 @@ client.on('messageCreate', async (message) => {
       return await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`You are still playing the game`)]
+      }).catch(error => {
+        console.log(`Cannot send messages`);
       });
     }
 
@@ -523,7 +571,9 @@ client.on('messageCreate', async (message) => {
 
     await message.channel.send({embeds: [new MessageEmbed()
       .setColor(infoColor)
-      .setDescription(`Hello ${opponent}\n\n${challenger} just challenged you to a game of SAIL Battle Ship\n\n${challenger} vs ${opponent}\n\nIf you want to accept, please type '${COMMAND_PREFIX}accept <user>'`)]});
+      .setDescription(`Hello ${opponent}\n\n${challenger} just challenged you to a game of SAIL Battle Ship\n\n${challenger} vs ${opponent}\n\nIf you want to accept, please type '${COMMAND_PREFIX}accept <user>'`)]}).catch(error => {
+        console.log(`Cannot send messages`);
+      });
     
     return;
   } else if (command == "accept") {
@@ -542,7 +592,9 @@ client.on('messageCreate', async (message) => {
     if (sol.amount < 0.1 || gSAIL.amount < 1 || SAIL.amount < 1) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(`You should have at least 0.1 sol, 1 gSAIL and 1 SAIL`)]});
+        .setDescription(`You should have at least 0.1 sol, 1 gSAIL and 1 SAIL`)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
         return;
     }
 
@@ -554,6 +606,8 @@ client.on('messageCreate', async (message) => {
       return await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`Please mention another SAILOR to battle!`)]
+      }).catch(error => {
+        console.log(`Cannot send messages`);
       });
 		}
 
@@ -562,6 +616,8 @@ client.on('messageCreate', async (message) => {
       return await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`Please challenge someone other than yourself!`)]
+      }).catch(error => {
+        console.log(`Cannot send messages`);
       });
 		}
 
@@ -570,6 +626,8 @@ client.on('messageCreate', async (message) => {
       return await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`You are still playing the game`)]
+      }).catch(error => {
+        console.log(`Cannot send messages`);
       });
     }
 
@@ -578,7 +636,9 @@ client.on('messageCreate', async (message) => {
     if (!await Room.getOpponent(challenger.id) || opponent.id != await Room.getOpponent(challenger.id)) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
-        .setDescription(`You can't fight to ${challenger.user}`)]});
+        .setDescription(`You can't fight to ${challenger.user}`)]}).catch(error => {
+          console.log(`Cannot send messages`);
+        });
         return;
     }
 
