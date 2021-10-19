@@ -177,7 +177,7 @@ client.on('messageCreate', async (message) => {
       });
     return;
   } else if (command == "test") {
-    // console.log(await Room.getAll());
+    console.log(await Room.getAll());
     return;
   }
 
@@ -556,8 +556,7 @@ client.on('messageCreate', async (message) => {
       });
 		}
     
-    if (await Room.getOpponent(challenger.id) && 
-      challenger.id == await Room.getOpponent(await Room.getOpponent(challenger.id))) {
+    if (await Room.checkIsPlaying(challenger.id)) { // check the user is playing
       return await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`You are still playing the game`)]
@@ -621,8 +620,7 @@ client.on('messageCreate', async (message) => {
       });
 		}
 
-    if (await Room.getOpponent(opponent.id) && 
-      opponent.id == await Room.getOpponent(await Room.getOpponent(opponent.id))) {
+    if (await Room.checkIsPlaying(opponent.id)) { // check the user is playing
       return await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`You are still playing the game`)]
@@ -631,16 +629,15 @@ client.on('messageCreate', async (message) => {
       });
     }
 
-    if (!await Room.getOpponent(challenger.id) || opponent.id != await Room.getOpponent(challenger.id)) {
-      await message.channel.send({embeds: [new MessageEmbed()
+    if (!await Room.checkCanAccept(challenger.id, opponent.id)) {
+      return await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
         .setDescription(`You can't fight to ${challenger.user}`)]}).catch(error => {
           console.log(`Cannot send messages`);
         });
-        return;
     }
 
-    Room.setRoom(opponent.id, challenger.id);
+    await Room.joinRoom(challenger.id, opponent.id);
 
     await BattleShip.createGame(message);
     return;
