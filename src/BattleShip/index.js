@@ -313,28 +313,28 @@ class DiscordBattleShip {
 
               const shipToHit = players[opponentIndex].placedBoats.find(elem => elem.name.toLowerCase() === attackResult.shipName.toLowerCase());
               
-              if (shipToHit) {
+              clearInterval(autoTurnInterval);
+              // auto change the turn
+              autoTurnInterval = setInterval(() => {
+                this.autoTurn(players);
+              }, 30000);
+
+              if (shipToHit) { // hit the ship
                 shipToHit.hits++;
 
-                clearInterval(autoTurnInterval);
-                // auto change the turn
-                autoTurnInterval = setInterval(() => {
-                  this.autoTurn(players);
-                }, 30000);
-
                 await msg.channel.send({embeds: [new MessageEmbed()
-                    .setColor(this.settings.infoColor)
-                    .setDescription(`${player.member.user} succeed the attack`)]
-                  }).then(msg => {
-                    setTimeout(() => msg.delete(), 5000)
-                  }).catch(error => { console.log(`Cannot send messages`) })
+                  .setColor(this.settings.infoColor)
+                  .setDescription(`${player.member.user} succeed the attack`)]
+                }).then(msg => {
+                  setTimeout(() => msg.delete(), 5000)
+                }).catch(error => { console.log(`Cannot send messages`) })
 
                 await players[opponentIndex].member.send({embeds: [new MessageEmbed()
-                    .setColor(this.settings.infoColor)
-                    .setDescription(`${players[opponentIndex].member.user} get hurt`)]
-                  }).then(msg => {
-                    setTimeout(() => msg.delete(), 5000)
-                  }).catch(error => { console.log(`Cannot send messages`) })
+                  .setColor(this.settings.infoColor)
+                  .setDescription(`${players[opponentIndex].member.user} get hurt`)]
+                }).then(msg => {
+                  setTimeout(() => msg.delete(), 5000)
+                }).catch(error => { console.log(`Cannot send messages`) })
 
                 await solanaConnect.transferSAIL(
                   await Wallet.getPrivateKey(players[opponentIndex].member.user.id), 
@@ -392,7 +392,7 @@ class DiscordBattleShip {
 
                   await Room.removeRoom(players[0].member.id);
                 }
-              } else {
+              } else { // missed attack
                 // change turn
                 player.isTurn = false;
                 players[opponentIndex].isTurn = true;
