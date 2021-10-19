@@ -631,8 +631,6 @@ client.on('messageCreate', async (message) => {
       });
     }
 
-    Room.setRoom(opponent.id, challenger.id);
-
     if (!await Room.getOpponent(challenger.id) || opponent.id != await Room.getOpponent(challenger.id)) {
       await message.channel.send({embeds: [new MessageEmbed()
         .setColor(dangerColor)
@@ -641,6 +639,8 @@ client.on('messageCreate', async (message) => {
         });
         return;
     }
+
+    Room.setRoom(opponent.id, challenger.id);
 
     await BattleShip.createGame(message);
     return;
