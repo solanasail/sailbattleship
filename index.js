@@ -177,7 +177,7 @@ client.on('messageCreate', async (message) => {
       });
     return;
   } else if (command == "test") {
-    console.log(await Room.getAll());
+    // console.log(await Room.getAll());
     return;
   }
 
@@ -566,7 +566,7 @@ client.on('messageCreate', async (message) => {
     }
 
     // set the room
-    Room.setRoom(challenger.id, opponent.id);
+    await Room.setRoom(challenger.id, opponent.id);
 
     await message.channel.send({embeds: [new MessageEmbed()
       .setColor(infoColor)

@@ -316,6 +316,12 @@ class DiscordBattleShip {
               if (shipToHit) {
                 shipToHit.hits++;
 
+                clearInterval(autoTurnInterval);
+                // auto change the turn
+                autoTurnInterval = setInterval(() => {
+                  this.autoTurn(players);
+                }, 30000);
+
                 await msg.channel.send({embeds: [new MessageEmbed()
                     .setColor(this.settings.infoColor)
                     .setDescription(`${player.member.user} succeed the attack`)]
@@ -390,12 +396,6 @@ class DiscordBattleShip {
                 // change turn
                 player.isTurn = false;
                 players[opponentIndex].isTurn = true;
-
-                clearInterval(autoTurnInterval);
-                // auto change the turn
-                autoTurnInterval = setInterval(() => {
-                  this.autoTurn(players);
-                }, 30000);
 
                 await players[opponentIndex].member.send({embeds: [new MessageEmbed()
                   .setColor(this.settings.infoColor)
