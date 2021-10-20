@@ -46,6 +46,11 @@ class DiscordBattleShip {
 				gameMessages: { help: "", status: "", army: "", enemy: "" }, 
 				ready: false,
         isTurn: false,
+        earnAmount: {
+          sol: 0,
+          sail: 0,
+          gsail: 0,
+        },
 			},
       // define the opponent
       { 
@@ -58,6 +63,11 @@ class DiscordBattleShip {
 				gameMessages: { help: "", status: "", army: "", enemy: "" }, 
 				ready: false,
         isTurn: false,
+        earnAmount: {
+          sol: 0,
+          sail: 0,
+          gsail: 0,
+        },
 			},
 		];
 
@@ -336,12 +346,15 @@ class DiscordBattleShip {
                   setTimeout(() => msg.delete(), 5000)
                 }).catch(error => { console.log(`Cannot send messages`) })
 
-                await solanaConnect.transferSAIL(
-                  await Wallet.getPrivateKey(players[opponentIndex].member.user.id), 
-                  await Wallet.getPublicKey(player.member.user.id), 
-                  1, 
-                  'Destroyed one piece of boat'
-                );
+                if (await solanaConnect.transferSAIL(
+                      await Wallet.getPrivateKey(players[opponentIndex].member.user.id), 
+                      await Wallet.getPublicKey(player.member.user.id), 
+                      1, 
+                      'Destroyed one piece of ship')
+                ) {
+                  player.earnAmount.sail++;
+                  players[opponentIndex].earnAmount.sail--;
+                }
                 
                 if (shipToHit.hits >= shipToHit.length) { // destroy the all pieces of boat
 									shipToHit.sunk = true;
@@ -377,7 +390,7 @@ class DiscordBattleShip {
                   const embed = new MessageEmbed()
                     .setTitle("SAIL Battle Ship Game")
                     .setColor(this.settings.infoColor)
-                    .setDescription(`${challenger.user} vs ${opponent.user}\n\n${player.member.user} is winner!`);
+                    .setDescription(`${challenger.user} vs ${opponent.user}\n\n${player.member.user} is winner!\n${player.member.user} got ${player.earnAmount.sail} SAIL`);
                   
                   for (const elem of players) {
                     elem.collector.stop();
