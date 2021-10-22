@@ -650,4 +650,4 @@ try {
 } catch (e) {
   console.error('Client has failed to connect to discord.');
   process.exit(1);
-}  
+}

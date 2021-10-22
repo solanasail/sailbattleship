@@ -184,7 +184,7 @@ class DiscordBattleShip {
 						if (!directions.some(elem => elem === direction.toLowerCase())) {
               return await msg.channel.send({embeds: [new MessageEmbed()
                 .setColor(this.settings.dangerColor)
-                .setDescription(`Please provide a valid dirrection. Valid Choices: ${directions.join(", ")}`)]
+                .setDescription(`Please provide a valid direction. Valid Choices: ${directions.join(", ")}`)]
               }).then(msg => {
                 setTimeout(() => msg.delete(), 3000)
               }).catch(error => { console.log(`Cannot send messages`) })
@@ -194,7 +194,7 @@ class DiscordBattleShip {
               player.armyBoard, 
               boats.find(elem => elem.name === boatType.toLowerCase()), 
               { letter: cords[0], number: parseInt(cords.slice(1)), cord: cords }, 
-              direction, 
+              direction.toLowerCase(), 
               "check"
             )) {
               return await msg.channel.send({embeds: [new MessageEmbed()
@@ -211,7 +211,7 @@ class DiscordBattleShip {
               player.armyBoard, 
               boats.find(elem => elem.name === boatType.toLowerCase()), 
               { letter: cords[0], number: parseInt(cords.slice(1)), cord: cords }, 
-              direction, 
+              direction.toLowerCase(),
               "render"
             );
 
