@@ -29,6 +29,8 @@ export const DB_USERNAME=''
 export const DB_PASSWORD=''
 export const DB_NAME='tip_sail'
 
+export const GUILD_ID='892131767308386304'
+
 export const EXPECTED_ROLS=[
   '@developer',
   '@tester'

@@ -14,7 +14,8 @@ import {
   SAIL_Emoji, 
   gSAIL_Emoji, 
   SOL_Emoji,
-  TRANSACTION_DESC
+  TRANSACTION_DESC,
+  GUILD_ID,
 } from './config/index.js'
 import Utils from './src/utils.js'
 
@@ -43,7 +44,8 @@ try {
 }
 
 // When the client is ready, run this code
-client.once('ready', () => {
+client.once('ready', async () => {
+  guild = await client.guilds.fetch(GUILD_ID);
   console.log(`Logged in as ${client.user.tag}!`);
 });
   
@@ -55,9 +57,6 @@ client.on('disconnected', function() {
 client.on('messageCreate', async (message) => {
   // Ignore the message if the prefix does not fit and if the client authored it.
   if (!message.content.startsWith(COMMAND_PREFIX) || message.author.bot) return;
-
-  // check the guild
-  guild = await Utils.checkGuild(client, guild, message);
 
   let tmpMsg = (message.content + ' ').split(' -m ');
 
@@ -93,7 +92,7 @@ client.on('messageCreate', async (message) => {
     const SAIL = await solanaConnect.getSAILBalance(account.privateKey);
 
     // convert the balance to dolar
-    const dollarValue = await PriceService.getDollarValueForSol(sol.amount);
+    const dollarValue = parseFloat(await PriceService.getDollarValueForSol(sol.amount)) + parseFloat(await PriceService.getDollarValueForGSail(gSAIL.amount)) + parseFloat(await PriceService.getDollarValueForSail(SAIL.amount));
 
     await message.author.send({embeds: [new MessageEmbed()
       .setTitle(`${CLUSTERS.DEVNET}`)
@@ -152,7 +151,7 @@ client.on('messageCreate', async (message) => {
     const SAIL = await solanaConnect.getSAILBalance(account.privateKey);
 
     // convert the balance to dolar
-    const dollarValue = await PriceService.getDollarValueForSol(sol.amount);
+    const dollarValue = parseFloat(await PriceService.getDollarValueForSol(sol.amount)) + parseFloat(await PriceService.getDollarValueForGSail(gSAIL.amount)) + parseFloat(await PriceService.getDollarValueForSail(SAIL.amount));
 
     await message.author.send({embeds: [new MessageEmbed()
       .setTitle(`${CLUSTERS.DEVNET}`)
@@ -175,9 +174,6 @@ client.on('messageCreate', async (message) => {
         `${COMMAND_PREFIX}balance\n${COMMAND_PREFIX}tipsol <user> <amount> -m <description>\n${COMMAND_PREFIX}tipsail <user> <amount> -m <description>\n${COMMAND_PREFIX}tipgsail <user> <amount> -m <description>\n\n?battleship <user>\n?accept <user>`)] }).catch(error => {
         console.log(`Cannot send messages to this user`);
       });
-    return;
-  } else if (command == "test") {
-    // console.log(await Room.getAll());
     return;
   }
 
@@ -208,7 +204,7 @@ client.on('messageCreate', async (message) => {
     const SAIL = await solanaConnect.getSAILBalance(await Wallet.getPrivateKey(message.author.id));
 
     // convert the balance to dolar
-    const dollarValue = await PriceService.getDollarValueForSol(sol.amount);
+    const dollarValue = parseFloat(await PriceService.getDollarValueForSol(sol.amount)) + parseFloat(await PriceService.getDollarValueForGSail(gSAIL.amount)) + parseFloat(await PriceService.getDollarValueForSail(SAIL.amount));
     
     await message.author.send({embeds: [new MessageEmbed()
       .setAuthor(message.author.tag)
@@ -258,7 +254,7 @@ client.on('messageCreate', async (message) => {
       if (!await Wallet.getPublicKey(elem)) {
         await message.channel.send({embeds: [new MessageEmbed()
           .setColor(dangerColor)
-          .setDescription(`<@!${elem}> dosn't have the wallet`)]}).catch(error => {
+          .setDescription(`<@!${elem}> doesn't have the wallet`)]}).catch(error => {
             console.log(`Cannot send messages`);
           });
         continue;
@@ -359,7 +355,7 @@ client.on('messageCreate', async (message) => {
       if (!await Wallet.getPublicKey(elem)) {
         await message.channel.send({embeds: [new MessageEmbed()
           .setColor(dangerColor)
-          .setDescription(`<@!${elem}> dosn't have the wallet`)]}).catch(error => {
+          .setDescription(`<@!${elem}> doesn't have the wallet`)]}).catch(error => {
             console.log(`Cannot send messages`);
           });
         continue;
@@ -461,7 +457,7 @@ client.on('messageCreate', async (message) => {
       if (!await Wallet.getPublicKey(elem)) {
         await message.channel.send({embeds: [new MessageEmbed()
           .setColor(dangerColor)
-          .setDescription(`<@!${elem}> dosn't have the wallet`)]}).catch(error => {
+          .setDescription(`<@!${elem}> doesn't have the wallet`)]}).catch(error => {
             console.log(`Cannot send messages`);
           });
         continue;
