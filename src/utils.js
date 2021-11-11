@@ -9,8 +9,8 @@ const string2Uint8Array = async (str) => {
     return [];
   }
   let arr = [];
-  
-  for(var i = 0; i < decodedString.length; i++){
+
+  for (var i = 0; i < decodedString.length; i++) {
     arr.push(decodedString[i]);
   };
 
@@ -24,7 +24,7 @@ const Uint8Array2String = async (arr) => {
   } catch (error) {
     return '';
   }
-  
+
 }
 
 const validateForTipping = async (args, desc) => {
@@ -44,7 +44,7 @@ const validateForTipping = async (args, desc) => {
   for (let i = 0; i < userIds.length; i++) {
     // detect the discord user id
     const elem = (/<@!(\d+)>/).exec(userIds[i]) || (/<@(\d+)>/).exec(userIds[i]);
-    
+
     if (!elem) {
       return {
         status: false,
@@ -78,7 +78,7 @@ const validateForTipping = async (args, desc) => {
       msg: `Invalid Amount\n${COMMAND_PREFIX}tip<type> @user1 @user2 ... <amount> -m <description>`,
     };
   }
-    
+
   return {
     status: true,
     ids: recipientIds,
@@ -93,11 +93,11 @@ const checkRoleInPublic = async (message) => {
   let satisfiedCount = 0;
   for (let i = 0; i < EXPECTED_ROLS.length; i++) {
     const elem = EXPECTED_ROLS[i];
-    
+
     role = message.guild.roles.cache.find(function (role) {
       return role.name == elem;
     });
-    
+
     if (role && message.member.roles.cache.has(role.id)) {
       satisfiedCount++;
     }
@@ -119,7 +119,7 @@ const checkRoleInPrivate = async (guild, message) => {
   let satisfiedCount = 0;
   for (let i = 0; i < EXPECTED_ROLS.length; i++) {
     const elem = EXPECTED_ROLS[i];
-    
+
     role = guild.roles.cache.find(function (role) {
       return role.name == elem;
     });
