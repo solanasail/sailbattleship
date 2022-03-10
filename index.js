@@ -7,15 +7,15 @@ import { DiscordBattleShip } from "./src/BattleShip/index.js"
 import Room from './src/BattleShip/room.js'
 
 import {
-  CLUSTERS,
-  COMMAND_PREFIX,
-  DISCORD_TOKEN,
-  SOL_FEE_LIMIT,
-  SAIL_Emoji,
-  gSAIL_Emoji,
-  SOL_Emoji,
-  TRANSACTION_DESC,
-  GUILD_ID,
+    ACTIVE_CLUSTER,
+    COMMAND_PREFIX,
+    DISCORD_TOKEN,
+    SOL_FEE_LIMIT,
+    SAIL_Emoji,
+    gSAIL_Emoji,
+    SOL_Emoji,
+    TRANSACTION_DESC,
+    GUILD_ID,
 } from './config/index.js'
 import Utils from './src/utils.js'
 
@@ -34,9 +34,11 @@ const BattleShip = new DiscordBattleShip({
   infoColor: infoColor,
 });
 
+let commands = ['helpbattleship', 'balance', 'import-wallet', 'register-wallet', 'tipsol', 'tipsail', 'tipgsail', 'battleship', 'accept'];
+
 try {
   // connect to database.
-  await DB.connectDB(CLUSTERS.DEVNET);
+  await DB.connectDB(ACTIVE_CLUSTER);
   console.log("Connected to MongoDB");
 } catch (error) {
   console.log("Cannot be able to connect to DB");
@@ -55,19 +57,22 @@ client.on('disconnected', function () {
 });
 
 client.on('messageCreate', async (message) => {
+
   // Ignore the message if the prefix does not fit and if the client authored it.
   if (!message.content.startsWith(COMMAND_PREFIX) || message.author.bot) return;
 
   let tmpMsg = (message.content + ' ').split(' -m ');
 
   let args = tmpMsg[0].slice(COMMAND_PREFIX.length).trim().split(/ +/);
+
   let command = args[0];
-  let desc = TRANSACTION_DESC;
   args = args.slice(1);
 
-  if (tmpMsg[1]) {
-    desc = tmpMsg[1];
-  }
+  let desc = tmpMsg[1] ?? TRANSACTION_DESC;
+
+  if (commands.findIndex((elem) => elem === command) == -1) {
+    return;
+  }  
 
   if (command == "register-wallet") { // Register wallet
     if (message.channel.type != "DM") {
@@ -98,7 +103,7 @@ client.on('messageCreate', async (message) => {
 
     await message.author.send({
       embeds: [new MessageEmbed()
-        .setTitle(`${CLUSTERS.DEVNET}`)
+        .setTitle(`Active Cluster: ${ACTIVE_CLUSTER}`)
         .setColor(infoColor)
         .setDescription(`Address: ${account.publicKey}\n\nPrivate Key:\n${await Utils.Uint8Array2String(account.privateKey)}\n\n[${account.privateKey}]\n\nSOL: ${sol.amount}\ngSAIL: ${gSAIL.amount}\nSAIL: ${SAIL.amount}\n\nTotal: ${dollarValue}$`)]
     }).catch(error => {
@@ -167,14 +172,14 @@ client.on('messageCreate', async (message) => {
 
     await message.author.send({
       embeds: [new MessageEmbed()
-        .setTitle(`${CLUSTERS.DEVNET}`)
+        .setTitle(`Active Cluster: ${ACTIVE_CLUSTER}`)
         .setColor(infoColor)
         .setDescription(`Address: ${account.publicKey}\n\nPrivate Key:\n${await Utils.Uint8Array2String(account.privateKey)}\n\n[${account.privateKey}]\n\nSOL: ${sol.amount}\ngSAIL: ${gSAIL.amount}\nSAIL: ${SAIL.amount}\n\nTotal: ${dollarValue}$`)]
     }).catch(error => {
       console.log(`Cannot send messages to this user`);
     });
     return;
-  } else if (command == "help") { // Display help
+  } else if (command == "helpbattleship") { // Display help
     if (message.channel.type == "DM") {
       return;
     }
@@ -224,19 +229,19 @@ client.on('messageCreate', async (message) => {
     // convert the balance to dolar
     const dollarValue = parseFloat(await PriceService.getDollarValueForSol(sol.amount)) + parseFloat(await PriceService.getDollarValueForGSail(gSAIL.amount)) + parseFloat(await PriceService.getDollarValueForSail(SAIL.amount));
 
-    await message.author.send({
-      embeds: [new MessageEmbed()
-        .setAuthor(message.author.tag)
-        .setColor(infoColor)
-        .setDescription(`Address: ${publicKey}\n\nSOL: ${sol.amount}\ngSAIL: ${gSAIL.amount}\nSAIL: ${SAIL.amount}\n\nTotal: ${dollarValue}$`)]
-    }).catch(error => {
-      console.log(`Cannot send messages to this user`);
-    });
-    return;
-  } else if (command == "tipsol") { // $tip <user_mention> <amount>: Tip <amount> TLO to <user_mention>
-    if (message.channel.type == "DM") {
-      return;
-    }
+        await message.author.send({
+            embeds: [new MessageEmbed()
+                .setAuthor(message.author.tag)
+                .setColor(infoColor)
+                .setDescription(`Active Cluster: ${ACTIVE_CLUSTER}\nAddress: ${publicKey}\n\nSOL: ${sol.amount}\ngSAIL: ${gSAIL.amount}\nSAIL: ${SAIL.amount}\n\nTotal: ${dollarValue}$`)]
+        }).catch(error => {
+            console.log(`Cannot send messages to this user`);
+        });
+        return;
+    } else if (command == "tipsol") { // $tip <user_mention> <amount>: Tip <amount> TLO to <user_mention>
+        if (message.channel.type == "DM") {
+            return;
+        }
 
     let validation = await Utils.validateForTipping(args, desc);
     if (!validation.status) {
@@ -308,38 +313,46 @@ client.on('messageCreate', async (message) => {
         return;
       }
 
-      await solanaConnect.transferSOL(await Wallet.getPrivateKey(message.author.id), await Wallet.getPublicKey(elem), amount, desc);
+      const {success, error, signature,} = await solanaConnect.transferSOL(await Wallet.getPrivateKey(message.author.id), await Wallet.getPublicKey(elem), amount, desc);
 
+      let msgToSender, msgToRecipient
+      if( success ) {
+        msgToSender    = `You sent ${amount} SOL to <@!${elem}>\nTransaction: ${ solanaConnect.txLink(signature) }` + ( desc ? `\n\nDescription:\n${desc}` : '')
+        msgToRecipient = `You received ${amount} SOL from <@!${message.author.id}>\nTransaction: ${ solanaConnect.txLink(signature) }` + ( desc ? `\n\nDescription:\n${desc}` : '')
+      } else {
+        msgToSender    = `Could not send SOL to <@!${elem}>\n\nError:\n${error}`
+        msgToRecipient = `Failed to receive SOL from <@!${message.author.id}>\n\nError:\n${error}`
+      }
       // DM to sender
       await message.author.send({
         embeds: [new MessageEmbed()
           .setColor(infoColor)
           .setTitle('Tip SOL')
-          .setDescription(`You sent ${amount} SOL to <@!${elem}>\n\nDescription:\n${desc}`)]
+          .setDescription(msgToSender)]
       }).catch(error => {
         console.log(`Cannot send messages to this user`);
       });
 
-      try {
-        // DM to recipient
-        let fetchedUser = await client.users.fetch(elem, false);
-        await fetchedUser.send({
-          embeds: [new MessageEmbed()
-            .setColor(infoColor)
-            .setTitle('Tip SOL')
-            .setDescription(`You received ${amount} SOL from <@!${message.author.id}>\n\nDescription:\n${desc}`)]
-        });
-      } catch (error) {
-        console.log(`Cannot send messages to this user`);
-      }
-    }
+            try {
+                // DM to recipient
+                let fetchedUser = await client.users.fetch(elem, false);
+                await fetchedUser.send({
+                    embeds: [new MessageEmbed()
+                        .setColor(infoColor)
+                        .setTitle('Tip SOL')
+                        .setDescription(msgToRecipient)]
+                });
+            } catch (error) {
+                console.log(`Cannot send messages to this user`);
+            }
+        }
 
     try {
       let tmpCache = await message.guild.emojis.cache;
       const sol_emoji = tmpCache.find(emoji => emoji.name == SOL_Emoji);
       await message.react(sol_emoji);
     } catch (error) {
-      console.log('sol emoji error');
+      console.log(`Sol emoji error: ${error}`);
     }
     return;
   } else if (command == "tipsail") {
@@ -429,38 +442,46 @@ client.on('messageCreate', async (message) => {
         return;
       }
 
-      await solanaConnect.transferSAIL(await Wallet.getPrivateKey(message.author.id), await Wallet.getPublicKey(elem), amount, desc);
+      const {success, error, signature,} = await solanaConnect.transferSAIL(await Wallet.getPrivateKey(message.author.id), await Wallet.getPublicKey(elem), amount, desc);
 
+      let msgToSender, msgToRecipient
+      if( success ) {
+        msgToSender    = `You sent ${amount} SAIL to <@!${elem}>\nTransaction: ${ solanaConnect.txLink(signature) }` + ( desc ? `\n\nDescription:\n${desc}` : '')
+        msgToRecipient = `You received ${amount} SAIL from <@!${message.author.id}>\nTransaction: ${ solanaConnect.txLink(signature) }` + ( desc ? `\n\nDescription:\n${desc}` : '')
+      } else {
+        msgToSender    = `Could not send SAIL to <@!${elem}>\n\nError:\n${error}`
+        msgToRecipient = `Failed to receive SAIL from <@!${message.author.id}>\n\nError:\n${error}`
+      }
       // DM to sender
       await message.author.send({
         embeds: [new MessageEmbed()
           .setColor(infoColor)
           .setTitle('Tip SAIL')
-          .setDescription(`You sent ${amount} SAIL to <@!${elem}>\n\nDescription:\n${desc}`)]
+          .setDescription(msgToSender)]
       }).catch(error => {
         console.log(`Cannot send messages to this user`);
       });
 
-      try {
-        // DM to recipient
-        let fetchedUser = await client.users.fetch(elem, false);
-        await fetchedUser.send({
-          embeds: [new MessageEmbed()
-            .setColor(infoColor)
-            .setTitle('Tip SAIL')
-            .setDescription(`You received ${amount} SAIL from <@!${message.author.id}>\n\nDescription:\n${desc}`)]
-        });
-      } catch (error) {
-        console.log(`Cannot send messages to this user`);
-      }
-    }
+            try {
+                // DM to recipient
+                let fetchedUser = await client.users.fetch(elem, false);
+                await fetchedUser.send({
+                    embeds: [new MessageEmbed()
+                        .setColor(infoColor)
+                        .setTitle('Tip SAIL')
+                        .setDescription(msgToRecipient)]
+                });
+            } catch (error) {
+                console.log(`Cannot send messages to this user`);
+            }
+        }
 
     try {
       let tmpCache = await message.guild.emojis.cache;
       const sail_emoji = tmpCache.find(emoji => emoji.name == SAIL_Emoji);
       await message.react(sail_emoji);
     } catch (error) {
-      console.log('sail emoji error');
+      console.log(`Sail emoji error: ${error}`);
     }
     return;
   } else if (command == "tipgsail") {
@@ -551,14 +572,22 @@ client.on('messageCreate', async (message) => {
         return;
       }
 
-      await solanaConnect.transferGSAIL(await Wallet.getPrivateKey(message.author.id), await Wallet.getPublicKey(elem), amount, desc);
+      const {success, error, signature,} = await solanaConnect.transferGSAIL(await Wallet.getPrivateKey(message.author.id), await Wallet.getPublicKey(elem), amount, desc);
 
+      let msgToSender, msgToRecipient
+      if( success ) {
+        msgToSender    = `You sent ${amount} gSAIL to <@!${elem}>\nTransaction: ${ solanaConnect.txLink(signature) }` + ( desc ? `\n\nDescription:\n${desc}` : '')
+        msgToRecipient = `You received ${amount} gSAIL from <@!${message.author.id}>\nTransaction: ${ solanaConnect.txLink(signature) }` + ( desc ? `\n\nDescription:\n${desc}` : '')
+      } else {
+        msgToSender    = `Could not send gSAIL to <@!${elem}>\n\nError:\n${error}`
+        msgToRecipient = `Failed to receive gSAIL from <@!${message.author.id}>\n\nError:\n${error}`
+      }
       // DM to sender
       await message.author.send({
         embeds: [new MessageEmbed()
           .setColor(infoColor)
           .setTitle('Tip gSAIL')
-          .setDescription(`You sent ${amount} gSAIL to <@!${elem}>\n\nDescription:\n${desc}`)]
+          .setDescription(msgToSender)]
       }).catch(error => {
         console.log(`Cannot send messages to this user`);
       });
@@ -570,7 +599,7 @@ client.on('messageCreate', async (message) => {
           embeds: [new MessageEmbed()
             .setColor(infoColor)
             .setTitle('Tip gSAIL')
-            .setDescription(`You received ${amount} gSAIL from <@!${message.author.id}>\n\nDescription:\n${desc}`)]
+            .setDescription(msgToRecipient)]
         });
       } catch (error) {
         console.log(`Cannot send messages to this user`);
@@ -582,7 +611,7 @@ client.on('messageCreate', async (message) => {
       const gsail_emoji = tmpCache.find(emoji => emoji.name == gSAIL_Emoji);
       await message.react(gsail_emoji);
     } catch (error) {
-      console.log('gsail emoji error');
+      console.log(`gSail emoji error: ${error}`);
     }
     return;
   } else if (command == "battleship") {
